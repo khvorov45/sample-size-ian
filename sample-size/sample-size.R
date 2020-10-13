@@ -25,7 +25,7 @@ percent_diff_to_b_adjuvant <- function(percent_diff) {
 }
 
 gen_one_pop <- function(n_per_group = 50,
-                        b0 = 1.1, # Postvax for no adjuvant for base 1 (3-fold)
+                        b0 = 1.1, # Logpostvax for no adjuvant for logbase 0
                         b_logbaseline = 0.8, # Add to logpostvax for 1 logbase
                         percent_diff = 10, # % diff b/w adjuvant and no adjuvant
                         b_adjuvant = percent_diff_to_b_adjuvant(percent_diff),
@@ -33,7 +33,7 @@ gen_one_pop <- function(n_per_group = 50,
                         sd_logpostvax = sd_logbaseline) {
   titre_vals <- 10 * 2^(0:10)
   n <- n_per_group * 2
-  tibble(
+  pop <- tibble(
     id = 1:n,
     adjuvant = extraDistr::rbern(n, 0.5),
     adjuvant_lbl = recode(
@@ -49,11 +49,24 @@ gen_one_pop <- function(n_per_group = 50,
     logbaseline_mid = midpoint_titres(baseline),
     logpostvax_mid = midpoint_titres(postvax),
   )
+  attr(pop, "true_vals") <- list(
+    n_per_group = n_per_group,
+    percent_diff = percent_diff,
+    b_adjuvant = b_adjuvant
+  )
+  pop
 }
 
 fit_one <- function(...) {
-  lm(logpostvax_mid ~ logbaseline_mid + adjuvant, gen_one_pop(...)) %>%
-    broom::tidy()
+  pop <- gen_one_pop(...)
+  res <- lm(logpostvax ~ logbaseline + adjuvant, pop) %>%
+    broom::tidy() %>%
+    bind_cols(as_tibble(attr(pop, "true_vals")))
+  res
+}
+
+fit_many <- function(nsim = 10, ...) {
+  map_dfr(1:nsim, function(i) fit_one(...) %>% mutate(i = i))
 }
 
 save_plot <- function(plot, name, ...) {
@@ -64,9 +77,14 @@ save_plot <- function(plot, name, ...) {
   )
 }
 
+save_data <- function(data, name) {
+  write_csv(data, file.path(sample_size_dir, paste0(name, ".csv")))
+}
+
 # Script ======================================================================
 
-relevant_diffs_percent <- seq(5, 30, 5)
+relevant_diffs_percent <- seq(10, 90, 20)
+sample_sizes_per_group <- seq(50, 300, 50)
 
 # Plots of an example of a simulated sample at each of the
 # relevant true differences
@@ -124,3 +142,30 @@ save_plot(
   one_example_diff_plot, "example-sample-diffs",
   width = 10, height = 12
 )
+
+# Simulate studies
+
+pars <- expand.grid(list(
+  percent_diff = relevant_diffs_percent,
+  n_per_group = sample_sizes_per_group
+)) %>%
+  as_tibble()
+
+sim_res <- future_pmap_dfr(
+  pars,
+  function(percent_diff, n_per_group) {
+    fit_many(500, percent_diff = percent_diff, n_per_group = n_per_group)
+  }
+)
+
+save_data(sim_res, "results")
+
+summary <- sim_res %>%
+  filter(term == "adjuvant") %>%
+  group_by(percent_diff, n_per_group) %>%
+  summarise(
+    power = sum(estimate > 0 & p.value < 0.05) / n(),
+    .groups = "drop"
+  )
+
+save_data(summary, "summary")
