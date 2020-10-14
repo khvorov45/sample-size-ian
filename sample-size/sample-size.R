@@ -59,7 +59,7 @@ gen_one_pop <- function(n_per_group = 50,
 
 fit_one <- function(...) {
   pop <- gen_one_pop(...)
-  res <- lm(logpostvax ~ logbaseline + adjuvant, pop) %>%
+  res <- lm(logpostvax_mid ~ logbaseline_mid + adjuvant, pop) %>%
     broom::tidy() %>%
     bind_cols(as_tibble(attr(pop, "true_vals")))
   res
@@ -83,7 +83,7 @@ save_data <- function(data, name) {
 
 # Script ======================================================================
 
-relevant_diffs_percent <- seq(10, 90, 20)
+relevant_diffs_percent <- seq(5, 30, 5)
 sample_sizes_per_group <- seq(50, 300, 50)
 
 # Plots of an example of a simulated sample at each of the
@@ -145,16 +145,37 @@ save_plot(
 
 # Simulate studies
 
-pars <- expand.grid(list(
-  percent_diff = relevant_diffs_percent,
-  n_per_group = sample_sizes_per_group
-)) %>%
-  as_tibble()
+pars <- tribble(
+  ~percent_diff, ~n_per_group,
+  5, 6000,
+  5, 7000,
+  5, 8000,
+
+  10, 1500,
+  10, 2000,
+  10, 2500,
+
+  15, 800,
+  15, 850,
+  15, 900,
+
+  20, 500,
+  20, 550,
+  20, 600,
+
+  25, 300,
+  25, 350,
+  25, 400,
+
+  30, 200,
+  30, 250,
+  30, 300,
+)
 
 sim_res <- future_pmap_dfr(
   pars,
   function(percent_diff, n_per_group) {
-    fit_many(500, percent_diff = percent_diff, n_per_group = n_per_group)
+    fit_many(1000, percent_diff = percent_diff, n_per_group = n_per_group)
   }
 )
 
