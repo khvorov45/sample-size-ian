@@ -7,7 +7,7 @@ rule install_deps:
         """Rscript -e 'renv::restore()'"""
 
 
-rule sample_size_gmr:
+rule gmr:
     input:
         rules.install_deps.output,
         "gmr/gmr.R",
@@ -15,11 +15,23 @@ rule sample_size_gmr:
         "gmr/example-sample-diffs.pdf",
         "gmr/example-sample-titres.pdf",
         "gmr/results.csv",
-        "gmr/summary.csv",
+        "gmr/summary-gmr.csv",
     shell:
         "Rscript gmr/gmr.R"
+
+rule seroconv:
+    input:
+        rules.install_deps.output,
+        "seroconv/seroconv.R",
+    output:
+        "seroconv/example-table.csv",
+        "seroconv/results.csv",
+        "seroconv/summary-seroconv.csv",
+    shell:
+        "Rscript seroconv/seroconv.R"
 
 rule all:
     input:
         rules.install_deps.output,
-        rules.sample_size_gmr.output,
+        rules.gmr.output,
+        rules.seroconv.output,

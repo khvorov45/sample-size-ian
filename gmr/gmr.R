@@ -190,4 +190,4 @@ summary <- sim_res %>%
     .groups = "drop"
   )
 
-save_data(summary, "summary")
+save_data(summary, "summary-gmr")
