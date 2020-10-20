@@ -17,7 +17,7 @@ gen_one_pop <- function(n_per_group = 50,
   n <- n_per_group * 2
   pop <- tibble(
     id = 1:n,
-    adjuvant = extraDistr::rbern(n, 0.5),
+    adjuvant = rep(c(0, 1), n_per_group),
     adjuvant_lbl = recode(
       adjuvant,
       "0" = "Vaccine", "1" = "Vaccine + adjuvant"
