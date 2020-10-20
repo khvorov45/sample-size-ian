@@ -171,6 +171,13 @@ pars <- tribble(
   40, 125,
   45, 125,
   50, 125,
+
+  35, 150,
+  40, 150,
+  45, 150,
+
+  25, 250, # 30, 250 is already present
+  35, 250,
 )
 
 sim_res <- future_pmap_dfr(
