@@ -12,7 +12,7 @@ seroconv_dir <- "seroconv"
 expit <- function(x) 1 - 1 / (1 + exp(x))
 
 gen_one_pop <- function(n_per_group = 50,
-                        b0 = 0, # Logodds of seroconv for no adjuvant
+                        b0 = log(1 / 3), # Logodds of seroconv for no adjuvant
                         b_adjuvant = log(1.3)) { # log-OR for seroconv
   n <- n_per_group * 2
   pop <- tibble(
@@ -71,7 +71,7 @@ s <- function(b_adjuvant, ...) {
     )
 }
 
-samples <- map_dfr(log(seq(1.8, 2.1, 0.1)), s, n_per_group = 1e6)
+samples <- map_dfr(log(seq(1.7, 2.2, 0.1)), s, n_per_group = 1e6)
 
 one_example_table <- samples %>%
   count(OR, adjuvant, seroconv_lbl) %>%
@@ -84,9 +84,18 @@ save_data(one_example_table, "example-table")
 
 pars <- tribble(
   ~b_adjuvant, ~n_per_group,
+
   log(2.2), 125,
   log(2.1), 125,
   log(2), 125,
+
+  log(1.9), 150,
+  log(2), 150,
+  log(2.1), 150,
+
+  log(1.7), 250,
+  log(1.8), 250,
+  log(1.9), 250,
 )
 
 sim_res <- future_pmap_dfr(
@@ -106,6 +115,7 @@ summary <- sim_res %>%
     .groups = "drop"
   ) %>%
   mutate(OR = exp(b_adjuvant)) %>%
-  select(-b_adjuvant)
+  select(-b_adjuvant) %>%
+  arrange(n_per_group)
 
 save_data(summary, "summary-seroconv")

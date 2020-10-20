@@ -195,6 +195,7 @@ summary <- sim_res %>%
   summarise(
     power = sum(estimate > 0 & p.value < 0.05) / n(),
     .groups = "drop"
-  )
+  ) %>%
+  arrange(n_per_group)
 
 save_data(summary, "summary-gmr")
