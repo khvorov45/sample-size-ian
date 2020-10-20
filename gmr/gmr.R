@@ -5,7 +5,7 @@ library(furrr)
 
 plan(multiprocess)
 
-sample_size_dir <- "sample-size"
+gmr_dir <- "gmr"
 
 # Functions ===================================================================
 
@@ -71,20 +71,17 @@ fit_many <- function(nsim = 10, ...) {
 
 save_plot <- function(plot, name, ...) {
   ggdark::ggsave_dark(
-    file.path(sample_size_dir, paste0(name, ".pdf")), plot,
+    file.path(gmr_dir, paste0(name, ".pdf")), plot,
     units = "cm",
     ...
   )
 }
 
 save_data <- function(data, name) {
-  write_csv(data, file.path(sample_size_dir, paste0(name, ".csv")))
+  write_csv(data, file.path(gmr_dir, paste0(name, ".csv")))
 }
 
 # Script ======================================================================
-
-relevant_diffs_percent <- seq(5, 30, 5)
-sample_sizes_per_group <- seq(50, 300, 50)
 
 # Plots of an example of a simulated sample at each of the
 # relevant true differences
@@ -97,7 +94,7 @@ s <- function(percent_diff, ...) {
       )
     )
 }
-samples <- map_dfr(relevant_diffs_percent, s) %>%
+samples <- map_dfr(seq(5, 30, 5), s) %>%
   mutate(percent_diff_lbl = reorder(percent_diff_lbl, percent_diff))
 
 one_example_plot <- samples %>%
@@ -170,6 +167,10 @@ pars <- tribble(
   30, 200,
   30, 250,
   30, 300,
+
+  40, 125,
+  45, 125,
+  50, 125,
 )
 
 sim_res <- future_pmap_dfr(

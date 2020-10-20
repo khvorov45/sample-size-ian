@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Generate all",
+            "type": "shell",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "command": "snakemake all --cores all"
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "snakemake all --cores all --delete-all-output"
+        }
+    ]
+}
